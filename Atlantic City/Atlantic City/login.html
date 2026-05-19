@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Atlantic City</title>
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    /* CONTENEDOR DEL INPUT */
+    .input-group {
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    /* BOTÓN TOGGLE (OJO CSS) */
+    .toggle-pass {
+      position: absolute;
+      right: 12px;
+      bottom: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    /* Dibujo del Ojo con CSS */
+    .eye-icon {
+      width: 16px;
+      height: 10px;
+      border: 2px solid var(--gold);
+      border-radius: 75% 15%;
+      position: relative;
+      transform: rotate(45deg);
+      display: block;
+      transition: all 0.3s ease;
+    }
+
+    .eye-icon::after {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: var(--gold);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Estado tachado (cuando está oculto/password) */
+    .toggle-pass.hidden .eye-icon::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 20px;
+      background: var(--gold);
+      top: -5px;
+      left: 7px;
+      transform: rotate(15deg);
+    }
+
+    .input-group input {
+      width: 100%;
+      padding-right: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <button class="logo-btn" onclick="window.location.href='index.html'">
+      <h2>Atlantic City</h2>
+    </button>
+  </div>
+  <div class="nav-btns">
+    <a href="registro.html" class="btn-nav-register">Registrarse</a>
+    <a href="login.html" class="btn-nav-login">Iniciar Sesión</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-overlay" style="position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(0,0,0,0.85),rgba(0,0,0,0.95));"></div>
+  
+  <div class="card" style="width:420px;max-width:95vw; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(212,175,55,0.1);">
+    <h2 style="text-align:center;margin-bottom:8px; color: var(--gold);">Iniciar Sesión</h2>
+    <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:24px;">Acceso seguro al sistema de casino</p>
+    
+    <form id="loginForm">
+      <div class="input-group">
+        <label>Usuario o Correo</label>
+        <!-- CAMBIO: type="text" para permitir "admin" sin @ -->
+        <input type="text" id="usuario" placeholder="admin o correo@ejemplo.com" required>
+      </div>
+
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input type="password" id="clave" placeholder="••••••••" required>
+        <button type="button" class="toggle-pass hidden" id="btnToggle" onclick="togglePassword()" title="Mostrar/Ocultar">
+          <span class="eye-icon"></span>
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0;">
+        <label style="font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <input type="checkbox" id="recordar" style="width: auto; margin: 0;"> Recordarme
+        </label>
+        <a href="#" style="color: var(--gold); font-size: 12px; text-decoration: none;">¿Olvidaste tu clave?</a>
+      </div>
+
+      <div id="loginError" style="display:none; color:#e05555; font-size:13px; margin-bottom:12px; text-align:center; padding: 10px; background: rgba(224,85,85,0.1); border-radius: 6px; border: 1px solid rgba(224,85,85,0.2);"></div>
+      
+      <button type="submit" id="btnIngresar" class="btn-primary" style="width:100%; padding:14px; font-size:14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+        Ingresar al Sistema
+      </button>
+    </form>
+
+    <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:20px;">
+      ¿No tienes cuenta? <a href="registro.html" style="color:var(--gold);text-decoration:none; font-weight: 600;">Crea una aquí</a>
+    </p>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>© 2026 Atlantic City — Seguridad y Confianza</p>
+</footer>
+
+<!-- Importante: script.js debe estar después de los IDs de los inputs -->
+<script src="script.js"></script>
+
+</body>
+</html>

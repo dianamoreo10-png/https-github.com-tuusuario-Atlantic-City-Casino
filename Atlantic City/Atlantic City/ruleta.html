@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ruleta Elite - Atlantic City</title>
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    .ruleta-container { text-align: center; padding: 90px 20px 50px; max-width: 800px; margin: 0 auto; }
+    
+    .game-area {
+        background: rgba(16, 14, 28, 0.6); 
+        padding: 40px; 
+        border-radius: 15px; 
+        border: 1px solid var(--glass-border);
+        margin: 30px auto;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Puntero Fijo */
+    .ruleta-pointer { 
+        position: absolute; 
+        top: 20px; 
+        left: 50%; 
+        transform: translateX(-50%); 
+        width: 0; 
+        height: 0; 
+        border-left: 15px solid transparent; 
+        border-right: 15px solid transparent; 
+        border-top: 25px solid var(--gold); 
+        z-index: 10;
+        filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
+    }
+
+    /* Rueda Giratoria */
+    .ruleta-wheel { 
+        width: 320px; 
+        height: 320px; 
+        border-radius: 50%; 
+        border: 10px solid #222;
+        box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.8);
+        background: conic-gradient(
+            #00b300 0deg 9.7deg, /* 0 Verde */
+            #ff3333 9.7deg 19.4deg, #111 19.4deg 29.1deg, #ff3333 29.1deg 38.8deg, #111 38.8deg 48.5deg,
+            #ff3333 48.5deg 58.2deg, #111 58.2deg 67.9deg, #ff3333 67.9deg 77.6deg, #111 77.6deg 87.3deg,
+            #ff3333 87.3deg 97deg, #111 97deg 106.7deg, #ff3333 106.7deg 116.4deg, #111 116.4deg 126.1deg,
+            #ff3333 126.1deg 135.8deg, #111 135.8deg 145.5deg, #ff3333 145.5deg 155.2deg, #111 155.2deg 164.9deg,
+            #ff3333 164.9deg 174.6deg, #111 174.6deg 184.3deg, #ff3333 184.3deg 194deg, #111 194deg 203.7deg,
+            #ff3333 203.7deg 213.4deg, #111 213.4deg 223.1deg, #ff3333 223.1deg 232.8deg, #111 232.8deg 242.5deg,
+            #ff3333 242.5deg 252.2deg, #111 252.2deg 261.9deg, #ff3333 261.9deg 271.6deg, #111 271.6deg 281.3deg,
+            #ff3333 281.3deg 291deg, #111 291deg 300.7deg, #ff3333 300.7deg 310.4deg, #111 310.4deg 320.1deg,
+            #ff3333 320.1deg 329.8deg, #111 329.8deg 339.5deg, #ff3333 339.5deg 349.2deg, #111 349.2deg 360deg
+        ); 
+        margin-top: 10px;
+        transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); /* Giro suave y realista */
+    }
+
+    .bet-area { margin-top: 25px; display: flex; gap: 15px; align-items: center; justify-content: center; }
+    .bet-input { background: rgba(0,0,0,0.5); border: 1px solid var(--gold); color: white; padding: 10px; border-radius: 5px; width: 100px; text-align: center; font-size: 1.1rem; }
+    
+    .result { font-family: 'Cinzel', serif; font-size: 1.8rem; margin-top: 25px; color: var(--gold); text-shadow: 0 0 15px var(--gold-glow); min-height: 40px;}
+    
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <button class="logo-btn" onclick="window.location.href='paginaprincipalcliente.html'">
+        <h2>Atlantic City</h2>
+      </button>
+    </div>
+    <div class="nav-btns">
+        <div style="background: var(--gold-glow-soft); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--gold);">
+            <span style="color: var(--gold); font-size: 0.9rem;">Saldo: </span>
+            <strong id="saldoDisplay" style="color: white;">S/ 0.00</strong>
+        </div>
+    </div>
+  </nav>
+
+  <div class="ruleta-container animate-in">
+    <h1 style="color: var(--gold); font-family: 'Cinzel Decorative', serif; margin-bottom: 5px;">RULETA ELITE</h1>
+    <p style="color: var(--text-muted);">Apuestas a Color (Rojo/Negro paga x2, Verde x35)</p>
+
+    <div class="game-area">
+        <div class="ruleta-pointer"></div>
+        <div class="ruleta-wheel" id="wheel"></div>
+        
+        <div class="bet-area">
+            <span style="color: white;">Apuesta (S/):</span>
+            <input type="number" id="apuesta" class="bet-input" min="1" value="10" />
+            <button class="btn-primary" id="btnSpin" onclick="spinWheel()">Girar Ruleta</button>
+        </div>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    let saldo = 0;
+    let currentRotation = 0; // Para mantener el estado del giro
+    const API_URL = 'http://localhost:3000/api';
+    const sessionData = sessionStorage.getItem('clienteLogged');
+    const cliente = sessionData ? JSON.parse(sessionData) : { nombre: "Invitado", saldo: 100, dni: "0" };
+
+    // --- SINCRONIZACIÓN DE SALDO ---
+    function updateSaldoUI() {
+      document.getElementById('saldoDisplay').textContent = `S/ ${Number(saldo).toFixed(2)}`;
+    }
+
+    async function syncSaldoHost(nuevoSaldo) {
+      saldo = nuevoSaldo;
+      updateSaldoUI();
+      cliente.saldo = nuevoSaldo;
+      sessionStorage.setItem('clienteLogged', JSON.stringify(cliente));
+
+      if (cliente.dni !== "0") {
+          try {
+              await fetch(`${API_URL}/clientes/${cliente.dni}/saldo`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ saldo: nuevoSaldo })
+              });
+          } catch (e) { console.warn("Servidor offline, saldo guardado localmente."); }
+      }
+    }
+
+    function registrar(apuesta, ganancia, resultado) {
+        if (window.opener && window.opener.registrarJuego) {
+            window.opener.registrarJuego('Ruleta', apuesta, ganancia, resultado);
+        }
+    }
+
+    // --- LÓGICA DE RULETA ---
+    async function spinWheel() {
+      const apuesta = parseInt(document.getElementById('apuesta').value);
+      if (isNaN(apuesta) || apuesta < 1) {
+          alert("Ingresa un monto de apuesta válido.");
+          return;
+      }
+      if (apuesta > saldo) {
+        alert("¡Saldo insuficiente! Por favor, recarga tu cuenta.");
+        return;
+      }
+
+      // Cobrar apuesta y bloquear botón
+      await syncSaldoHost(saldo - apuesta);
+      document.getElementById('btnSpin').disabled = true;
+      document.getElementById('result').textContent = 'Girando...';
+
+      const wheel = document.getElementById('wheel');
+      
+      // Orden estándar de los números en la ruleta europea (37 números)
+      const numbers = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+      
+      // Generar giro extra
+      const randomDegree = Math.floor(Math.random() * 360);
+      const extraSpins = 1440; // 4 vueltas completas
+      
+      currentRotation += extraSpins + randomDegree;
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+      // Esperar a que termine la animación (4s)
+      setTimeout(async () => {
+        // Calcular el número ganador basándose en el ángulo final
+        const normalizedAngle = currentRotation % 360;
+        
+        // El puntero está arriba (0 grados). 
+        // Como la rueda gira en sentido horario (positivos), el número que queda arriba 
+        // es el que estaba en el ángulo inverso (-normalizedAngle) originalmente.
+        const pointerAngle = (360 - normalizedAngle) % 360;
+        
+        const sliceDegree = 360 / 37;
+        const index = Math.floor(pointerAngle / sliceDegree);
+        const numeroGanador = numbers[index];
+
+        let ganancia = 0;
+        let color = '';
+        
+        // Simulación: Apuesta automática "Rojo o Negro" según si el número es par o impar (excepto 0)
+        if (numeroGanador === 0) {
+            ganancia = apuesta * 35; 
+            color = 'VERDE';
+        } else if (numeroGanador % 2 === 0) {
+            ganancia = apuesta * 2; 
+            color = 'ROJO (Par)';
+        } else {
+            ganancia = 0; // Se asume que el jugador apostó a pares en este simulador
+            color = 'NEGRO (Impar)';
+        }
+
+        let status = 'Perdida';
+        if (ganancia > 0) {
+            status = 'Ganada';
+            await syncSaldoHost(saldo + ganancia);
+            document.getElementById('result').textContent = `[${numeroGanador} ${color}] - ¡GANASTE S/ ${ganancia}!`;
+        } else {
+            document.getElementById('result').textContent = `[${numeroGanador} ${color}] - PIERDES`;
+        }
+
+        registrar(apuesta, ganancia, status);
+        document.getElementById('btnSpin').disabled = false;
+
+      }, 4000); // 4000ms coincide con la transición CSS
+    }
+
+    // --- CARGA INICIAL ---
+    window.onload = () => {
+      saldo = cliente.saldo;
+      updateSaldoUI();
+      if (cliente.dni !== "0") {
+        fetch(`${API_URL}/clientes`)
+          .then(r => r.json())
+          .then(data => {
+            const c = data.find(u => u.dni === cliente.dni);
+            if (c) { saldo = c.saldo; updateSaldoUI(); }
+          }).catch(() => console.log("Offline mode"));
+      }
+    };
+  </script>
+</body>
+</html>

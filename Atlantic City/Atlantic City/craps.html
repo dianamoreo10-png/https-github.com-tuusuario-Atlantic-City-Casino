@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Craps - Dados - Atlantic City</title>
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    .craps-container { text-align: center; padding: 90px 20px 50px; max-width: 800px; margin: 0 auto; }
+    
+    .dice-area {
+        background: rgba(16, 14, 28, 0.6); 
+        padding: 40px; 
+        border-radius: 15px; 
+        border: 1px solid var(--glass-border);
+        margin: 30px auto;
+        max-width: 500px;
+    }
+
+    .dice { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
+    
+    /* Estilo de los dados físicos */
+    .die-visual { 
+        width: 100px; 
+        height: 100px; 
+        background: #fafaf8; 
+        border-radius: 15px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 5rem; 
+        color: #8b1a2e; /* Rojo casino */
+        box-shadow: inset -5px -5px 15px rgba(0,0,0,0.2), 0 10px 20px rgba(0,0,0,0.6);
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        transition: transform 0.1s;
+    }
+
+    .buttons { margin-top: 30px; }
+    .result { font-family: 'Cinzel', serif; font-size: 1.8rem; margin-top: 25px; color: var(--gold); text-shadow: 0 0 15px var(--gold-glow); height: 40px; }
+    
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <button class="logo-btn" onclick="window.location.href='paginaprincipalcliente.html'">
+        <h2>Atlantic City</h2>
+      </button>
+    </div>
+    <div class="nav-btns">
+        <div style="background: var(--gold-glow-soft); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--gold);">
+            <span style="color: var(--gold); font-size: 0.9rem;">Saldo: </span>
+            <strong id="saldoDisplay" style="color: white;">S/ 0.00</strong>
+        </div>
+    </div>
+  </nav>
+
+  <div class="craps-container animate-in">
+    <h1 style="color: var(--gold); font-family: 'Cinzel Decorative', serif; margin-bottom: 10px;">CRAPS ELITE</h1>
+    <p style="color: var(--text-muted);">Apuesta: S/ 15.00</p>
+
+    <div class="dice-area">
+        <div class="dice">
+            <div class="die-visual" id="die1">⚀</div>
+            <div class="die-visual" id="die2">⚀</div>
+        </div>
+        <div class="buttons">
+            <button class="btn-primary" id="btnRoll" onclick="rollDice()" style="font-size: 1.1rem; padding: 15px 40px;">🎲 Lanzar Dados</button>
+        </div>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+    let saldo = 0;
+    const APUESTA = 15;
+    const API_URL = 'http://localhost:3000/api';
+    const sessionData = sessionStorage.getItem('clienteLogged');
+    const cliente = sessionData ? JSON.parse(sessionData) : { nombre: "Invitado", saldo: 100, dni: "0" };
+
+    // --- 1. SINCRONIZACIÓN DE SALDO ---
+    function updateSaldoUI() {
+      document.getElementById('saldoDisplay').textContent = `S/ ${Number(saldo).toFixed(2)}`;
+    }
+
+    async function syncSaldoHost(nuevoSaldo) {
+      saldo = nuevoSaldo;
+      updateSaldoUI();
+      
+      // Actualizar sesión local
+      cliente.saldo = nuevoSaldo;
+      sessionStorage.setItem('clienteLogged', JSON.stringify(cliente));
+
+      // Guardar en servidor (biblioteca.db)
+      if (cliente.dni !== "0") {
+          try {
+              await fetch(`${API_URL}/clientes/${cliente.dni}/saldo`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ saldo: nuevoSaldo })
+              });
+          } catch (e) { console.warn("Servidor offline, saldo guardado localmente."); }
+      }
+    }
+
+    function registrar(ganancia, resultado) {
+        if (window.opener && window.opener.registrarJuego) {
+            window.opener.registrarJuego('Craps - Dados', APUESTA, ganancia, resultado);
+        }
+    }
+
+    // --- 2. LÓGICA DEL JUEGO ---
+    async function rollDice() {
+      if (saldo < APUESTA) {
+        alert("¡Saldo insuficiente! Por favor, realiza una recarga.");
+        return;
+      }
+
+      // Bloquear botón y limpiar resultado
+      const btnRoll = document.getElementById('btnRoll');
+      btnRoll.disabled = true;
+      document.getElementById('result').textContent = 'Lanzando...';
+
+      // Cobrar la apuesta inmediatamente
+      await syncSaldoHost(saldo - APUESTA);
+
+      const die1 = document.getElementById('die1');
+      const die2 = document.getElementById('die2');
+      
+      let rolls = 0;
+      
+      // Animación de dados girando
+      const interval = setInterval(() => {
+        die1.textContent = diceFaces[Math.floor(Math.random() * 6)];
+        die2.textContent = diceFaces[Math.floor(Math.random() * 6)];
+        
+        // Efecto de vibración
+        die1.style.transform = `rotate(${Math.random() * 20 - 10}deg) scale(1.05)`;
+        die2.style.transform = `rotate(${Math.random() * 20 - 10}deg) scale(1.05)`;
+        
+        rolls++;
+        if (rolls > 15) {
+          clearInterval(interval);
+          
+          // Resultado final
+          const value1 = Math.floor(Math.random() * 6) + 1;
+          const value2 = Math.floor(Math.random() * 6) + 1;
+          const total = value1 + value2;
+          
+          die1.textContent = diceFaces[value1 - 1];
+          die2.textContent = diceFaces[value2 - 1];
+          die1.style.transform = 'none';
+          die2.style.transform = 'none';
+
+          evaluarResultado(total);
+          btnRoll.disabled = false;
+        }
+      }, 100);
+    }
+
+    async function evaluarResultado(total) {
+        let winAmount = 0;
+        let status = 'Perdida';
+        let msg = '';
+
+        if (total === 7 || total === 11) {
+            winAmount = APUESTA * 2; // Gana el doble
+            msg = `🎲 ${total} - ¡GANASTE S/ ${winAmount}!`;
+            status = 'Ganada';
+        } else if (total === 2 || total === 3 || total === 12) {
+            msg = `🎲 ${total} - CRAPS. PIERDES.`;
+        } else {
+            winAmount = APUESTA; // Punto establecido, se devuelve la apuesta
+            msg = `🎲 ${total} - PUNTO. EMPATE (DEVOLUCIÓN).`;
+            status = 'Empate';
+        }
+
+        document.getElementById('result').textContent = msg;
+
+        // Pagar si ganó o empató
+        if (winAmount > 0) {
+            await syncSaldoHost(saldo + winAmount);
+        }
+
+        // Registrar en historial
+        registrar(winAmount, status);
+    }
+
+    // --- 3. CARGA INICIAL ---
+    window.onload = () => {
+      saldo = cliente.saldo;
+      updateSaldoUI();
+      // Traer saldo fresco del server
+      if (cliente.dni !== "0") {
+        fetch(`${API_URL}/clientes`)
+          .then(r => r.json())
+          .then(data => {
+            const c = data.find(u => u.dni === cliente.dni);
+            if (c) { saldo = c.saldo; updateSaldoUI(); }
+          }).catch(() => console.log("Cargando desde sesión local."));
+      }
+    };
+  </script>
+</body>
+</html>

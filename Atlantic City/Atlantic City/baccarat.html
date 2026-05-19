@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baccarat - Atlantic City</title>
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    .baccarat-container { text-align: center; padding: 90px 20px 50px; max-width: 800px; margin: 0 auto; }
+    .hands { display: flex; justify-content: center; gap: 40px; margin: 30px 0; flex-wrap: wrap; }
+    .hand { 
+        background: rgba(16, 14, 28, 0.6); 
+        padding: 20px; 
+        border-radius: 15px; 
+        border: 1px solid var(--glass-border);
+        min-width: 250px;
+    }
+    .cards { display: flex; justify-content: center; gap: 10px; margin: 15px 0; min-height: 110px; }
+    
+    /* Estilo de las cartas físicas */
+    .card-visual { 
+        background: #fafaf8; 
+        border-radius: 8px; 
+        width: 70px; 
+        height: 100px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 1.8rem; 
+        color: #1a1a1a; 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        font-family: 'Lato', sans-serif;
+        font-weight: bold;
+    }
+    
+    .buttons { margin-top: 30px; display: flex; justify-content: center; gap: 15px; }
+    .result { font-family: 'Cinzel', serif; font-size: 2rem; margin-top: 25px; color: var(--gold); text-shadow: 0 0 15px var(--gold-glow); }
+    .score-badge { color: var(--gold); font-weight: bold; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <button class="logo-btn" onclick="window.location.href='paginaprincipalcliente.html'">
+        <h2>Atlantic City</h2>
+      </button>
+    </div>
+    <div class="nav-btns">
+        <div style="background: var(--gold-glow-soft); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--gold);">
+            <span style="color: var(--gold); font-size: 0.9rem;">Saldo: </span>
+            <strong id="saldoDisplay" style="color: white;">S/ 0.00</strong>
+        </div>
+    </div>
+  </nav>
+
+  <div class="baccarat-container animate-in">
+    <h1 style="color: var(--gold); font-family: 'Cinzel Decorative', serif; margin-bottom: 10px;">BACCARAT ELITE</h1>
+    <p style="color: var(--text-muted);">Apuesta mínima: S/ 10.00</p>
+
+    <div class="hands">
+      <div class="hand">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--text-light);">JUGADOR</h3>
+        <div class="cards" id="playerCards"></div>
+        <div class="score-badge">Puntos: <span id="playerTotal">0</span></div>
+      </div>
+      <div class="hand">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--text-light);">BANCA</h3>
+        <div class="cards" id="bankerCards"></div>
+        <div class="score-badge">Puntos: <span id="bankerTotal">0</span></div>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="btn-primary" id="btnDeal" onclick="deal()">Repartir Cartas</button>
+      <button class="btn-nav-register" onclick="newGame()">Limpiar Mesa</button>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    let deck = [];
+    let saldo = 0;
+    const APUESTA = 10;
+    const API_URL = 'http://localhost:3000/api';
+    const sessionData = sessionStorage.getItem('clienteLogged');
+    const cliente = sessionData ? JSON.parse(sessionData) : { nombre: "Invitado", saldo: 100, dni: "0" };
+
+    // --- 1. SINCRONIZACIÓN DE SALDO ---
+    function updateSaldoUI() {
+      document.getElementById('saldoDisplay').textContent = `S/ ${Number(saldo).toFixed(2)}`;
+    }
+
+    async function syncSaldoHost(nuevoSaldo) {
+      saldo = nuevoSaldo;
+      updateSaldoUI();
+      
+      // Actualizar sesión local
+      cliente.saldo = nuevoSaldo;
+      sessionStorage.setItem('clienteLogged', JSON.stringify(cliente));
+
+      // Intentar guardar en el servidor (biblioteca.db)
+      if (cliente.dni !== "0") {
+          try {
+              await fetch(`${API_URL}/clientes/${cliente.dni}/saldo`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ saldo: nuevoSaldo })
+              });
+          } catch (e) { console.warn("Servidor offline, saldo guardado localmente."); }
+      }
+    }
+
+    // --- 2. LÓGICA DEL JUEGO ---
+    function createDeck() {
+      const suits = ['♠', '♥', '♦', '♣'];
+      const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+      deck = [];
+      for (let s of suits) {
+        for (let v of values) deck.push({ suit: s, value: v });
+      }
+      // Shuffle
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+    }
+
+    function getCardValue(card) {
+      if (card.value === 'A') return 1;
+      if (['10', 'J', 'Q', 'K'].includes(card.value)) return 0;
+      return parseInt(card.value);
+    }
+
+    function calculateTotal(cards) {
+      return cards.reduce((sum, card) => sum + getCardValue(card), 0) % 10;
+    }
+
+    function renderCards(cards, elementId) {
+      const element = document.getElementById(elementId);
+      element.innerHTML = '';
+      cards.forEach(card => {
+        const div = document.createElement('div');
+        div.className = 'card-visual animate-in';
+        const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+        div.style.color = color;
+        div.textContent = card.value + card.suit;
+        element.appendChild(div);
+      });
+    }
+
+    async function deal() {
+      if (saldo < APUESTA) {
+        alert("¡Saldo insuficiente! Por favor, realiza una recarga.");
+        return;
+      }
+
+      document.getElementById('btnDeal').disabled = true;
+      await syncSaldoHost(saldo - APUESTA);
+      
+      createDeck();
+      const pCards = [deck.pop(), deck.pop()];
+      const bCards = [deck.pop(), deck.pop()];
+
+      renderCards(pCards, 'playerCards');
+      renderCards(bCards, 'bankerCards');
+
+      const pTotal = calculateTotal(pCards);
+      const bTotal = calculateTotal(bCards);
+
+      document.getElementById('playerTotal').textContent = pTotal;
+      document.getElementById('bankerTotal').textContent = bTotal;
+
+      let winAmount = 0;
+      let msg = "";
+      let status = "Perdida";
+
+      if (pTotal > bTotal) {
+        winAmount = APUESTA * 2;
+        msg = "¡GANASTE! + S/ " + winAmount;
+        status = "Ganada";
+      } else if (bTotal > pTotal) {
+        msg = "LA BANCA GANA";
+      } else {
+        winAmount = APUESTA;
+        msg = "EMPATE - DEVOLUCIÓN";
+        status = "Empate";
+      }
+
+      if (winAmount > 0) await syncSaldoHost(saldo + winAmount);
+      
+      document.getElementById('result').textContent = msg;
+      
+      // Registrar en el historial de Atlantic City
+      if (window.opener && window.opener.registrarJuego) {
+          window.opener.registrarJuego('Baccarat', APUESTA, winAmount, status);
+      }
+
+      setTimeout(() => { document.getElementById('btnDeal').disabled = false; }, 1000);
+    }
+
+    function newGame() {
+      document.getElementById('playerCards').innerHTML = '';
+      document.getElementById('bankerCards').innerHTML = '';
+      document.getElementById('playerTotal').textContent = '0';
+      document.getElementById('bankerTotal').textContent = '0';
+      document.getElementById('result').textContent = '';
+    }
+
+    // --- 3. CARGA INICIAL ---
+    window.onload = () => {
+      saldo = cliente.saldo;
+      updateSaldoUI();
+      // Intentar traer saldo fresco del server
+      if (cliente.dni !== "0") {
+        fetch(`${API_URL}/clientes`)
+          .then(r => r.json())
+          .then(data => {
+            const c = data.find(u => u.dni === cliente.dni);
+            if (c) { saldo = c.saldo; updateSaldoUI(); }
+          }).catch(() => console.log("Cargando desde sesión local."));
+      }
+    };
+  </script>
+</body>
+</html>

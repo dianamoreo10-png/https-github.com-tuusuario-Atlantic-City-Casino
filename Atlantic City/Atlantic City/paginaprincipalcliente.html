@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <button class="logo-btn" onclick="window.location.href='paginaprincipalcliente.html'">
+        <h2>Atlantic City</h2>
+      </button>
+    </div>
+    <div class="nav-btns">
+      <div class="user-menu" id="userMenu">
+        <button class="user-trigger" id="userTrigger">
+          <span class="user-avatar">♠</span>
+          <span id="userDisplayName">Usuario</span>
+          <span class="arrow">▼</span>
+        </button>
+        <div class="user-dropdown">
+          <div class="dropdown-info">
+            <span>Conectado como</span>
+            <strong id="userFullName">—</strong>
+          </div>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="irAQuejas()">
+            <span class="dropdown-icon">✉</span> Dejar queja
+          </button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" onclick="cerrarSesionCliente()">
+            <span class="dropdown-icon">⎋</span> Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="casino-hero">
+    <video autoplay muted loop playsinline class="bg-video">
+      <source src="multimedia/video.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="casino-hero-content">
+      <p class="hero-subtitle">Bienvenido de vuelta,</p>
+      <h1 id="welcomeMsg">Jugador</h1>
+      <p class="hero-desc">Tu suerte comienza aquí. Elige tu juego y apuesta con estilo.</p>
+      <a href="#juegos" class="btn-hero">Ver juegos ↓</a>
+      <a href="#promociones" class="btn-hero">Ver Promociones ↓</a>
+    </div>
+  </section>
+
+  <section class="card" style="margin: 90px auto 30px; max-width: 1100px; padding: 1.5rem;">
+    <h2 style="font-size: 1.3rem; color: var(--gold); margin-bottom: 0.8rem;">Mi perfil</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Actualiza tus datos de cliente para que todo esté siempre al día.</p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+      <div>
+        <label style="font-size:12px; color:#bbb;">Nombre completo</label>
+        <input id="perfilNombre" type="text" placeholder="Nombre completo" />
+      </div>
+      <div>
+        <label style="font-size:12px; color:#bbb;">Correo</label>
+        <input id="perfilCorreo" type="email" placeholder="Correo" />
+      </div>
+      <div>
+        <label style="font-size:12px; color:#bbb;">Edad</label>
+        <input id="perfilEdad" type="number" min="18" placeholder="Edad" />
+      </div>
+      <div>
+        <label style="font-size:12px; color:#bbb;">Segmento</label>
+        <select id="perfilSegmento">
+          <option value="estandar">Estándar</option>
+          <option value="vip">VIP</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:1rem; display:flex; align-items:center; gap:12px;">
+      <button class="btn-primary" style="padding:0.7rem 1.2rem;" onclick="guardarPerfilCliente()">Guardar perfil</button>
+      <span id="perfilMsg" style="font-size:0.9rem;color:var(--text-muted);"></span>
+    </div>
+  </section>
+
+  <section class="card" style="margin: 30px auto; max-width: 1100px; padding: 1.5rem;">
+    <h2 style="font-size: 1.3rem; color: var(--gold); margin-bottom: 0.8rem;">Resumen de Jugadas</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Aquí puedes ver tu saldo actual y un historial rápido de partidas ganadas/perdidas.</p>
+    <div id="resumenSaldo" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:1rem;">
+      <div style="background:rgba(255,255,255,0.07); padding:12px; border-radius:8px; min-width:180px;">Saldo actual: <strong id="saldoActual">S/ 0</strong></div>
+      <div style="background:rgba(255,255,255,0.07); padding:12px; border-radius:8px; min-width:180px;">Ganadas: <strong id="partidasGanadas">0</strong></div>
+      <div style="background:rgba(255,255,255,0.07); padding:12px; border-radius:8px; min-width:180px;">Perdidas: <strong id="partidasPerdidas">0</strong></div>
+      <div style="background:rgba(255,255,255,0.07); padding:12px; border-radius:8px; min-width:180px;">Beneficio neto: <strong id="beneficioNeto">S/ 0</strong></div>
+    </div>
+    <div id="detalleJuegos" style="max-height:300px; overflow:auto;"></div>
+  </section>
+
+  <section class="card" style="margin: 30px auto; max-width: 1100px; padding: 1.5rem;">
+    <h2 style="font-size: 1.3rem; color: var(--gold); margin-bottom: 0.8rem;">Solicitud de Recarga</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Sube comprobante de transferencia y solicita crédito para jugar.</p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+      <div>
+        <label style="font-size:12px; color:#bbb;">Monto a recargar (S/)</label>
+        <input id="recargaMonto" type="number" min="10" placeholder="Monto" />
+      </div>
+      <div>
+        <label style="font-size:12px; color:#bbb;">Descripción</label>
+        <input id="recargaDescripcion" type="text" placeholder="Descripción del pago" />
+      </div>
+      <div>
+        <label style="font-size:12px; color:#bbb;">Foto del comprobante</label>
+        <input id="recargaFoto" type="file" accept="image/*" />
+      </div>
+    </div>
+    <div style="margin-top:1rem; display:flex; align-items:center; gap:12px;">
+      <button class="btn-primary" style="padding:0.7rem 1.2rem;" onclick="solicitarRecarga()">Enviar solicitud</button>
+      <span id="recargaMsg" style="font-size:0.9rem;color:var(--text-muted);"></span>
+    </div>
+    <div id="historialRecargas" style="margin-top: 1rem;"></div>
+  </section>
+
+  <section class="card" style="margin: 30px auto; max-width: 1100px; padding: 1.5rem;">
+    <h2 style="font-size: 1.3rem; color: var(--gold); margin-bottom: 0.8rem;">Detalle completo de usuario</h2>
+    <div id="perfilInfoDetalle" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; color:#eee;">
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">DNI: <strong id="detalleDNI">-</strong></div>
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">Segmento: <strong id="detalleSegmento">-</strong></div>
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">Saldo: <strong id="detalleSaldo">S/ 0</strong></div>
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">Jugadas totales: <strong id="detalleJugadasTotales">0</strong></div>
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">Ganadas: <strong id="detalleGanadas">0</strong></div>
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">Perdidas: <strong id="detallePerdidas">0</strong></div>
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">Recargas aprobadas: <strong id="detalleRecargasAprobadas">0</strong></div>
+      <div style="background: rgba(10,10,10,0.6); padding: 10px; border-radius: 8px;">Recargas pendientes: <strong id="detalleRecargasPendientes">0</strong></div>
+    </div>
+  </section>
+
+  <section class="games-section" id="juegos">
+    <div class="games-container">
+      <div class="section-header">
+        <h2 class="section-title">Nuestros Juegos</h2>
+        <p class="section-sub">Selecciona una mesa y comienza a jugar</p>
+      </div>
+
+      <div class="games-grid">
+        <div class="game-card" onclick="abrirJuego('Ruleta')">
+          <div class="game-icon">🎡</div>
+          <div class="game-badge">En vivo</div>
+          <h3 class="game-name">Ruleta</h3>
+          <p class="game-desc">Apuesta al número, color o sección que elijas. La bola decide tu destino.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 10</strong></span>
+            <span class="game-players">● 4 jugando</span>
+          </div>
+          <button class="btn-game">Jugar ahora</button>
+        </div>
+
+        <div class="game-card" onclick="abrirJuego('Blackjack')">
+          <div class="game-icon">🃏</div>
+          <div class="game-badge badge-hot">Popular</div>
+          <h3 class="game-name">Blackjack</h3>
+          <p class="game-desc">Llega al 21 antes que el crupier sin pasarte. Estrategia y sangre fría.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 20</strong></span>
+            <span class="game-players">● 7 jugando</span>
+          </div>
+          <button class="btn-game">Jugar ahora</button>
+        </div>
+
+        <div class="game-card" onclick="abrirJuego('Tragamonedas')">
+          <div class="game-icon">🎰</div>
+          <div class="game-badge badge-new">Nuevo</div>
+          <h3 class="game-name">Tragamonedas</h3>
+          <p class="game-desc">Gira los rodillos y espera que los símbolos se alineen a tu favor.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 5</strong></span>
+            <span class="game-players">● 12 jugando</span>
+          </div>
+          <button class="btn-game">Jugar ahora</button>
+        </div>
+
+        <div class="game-card" onclick="abrirJuego('Poker Texas Holdem')">
+          <div class="game-icon">♠</div>
+          <div class="game-badge">Mesa VIP</div>
+          <h3 class="game-name">Póker Texas</h3>
+          <p class="game-desc">La mejor mano gana. Blufea, sube las apuestas y domina la mesa.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 50</strong></span>
+            <span class="game-players">● 3 jugando</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button class="btn-game" onclick="abrirJuego('Poker Texas')">JUGAR AHORA</button>
+          </div>
+        </div>
+
+        <div class="game-card" onclick="abrirJuego('Baccarat')">
+          <div class="game-icon">🎴</div>
+          <div class="game-badge">Clásico</div>
+          <h3 class="game-name">Baccarat</h3>
+          <p class="game-desc">Apuesta al Jugador, a la Banca o al Empate. Simple, elegante y emocionante.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 30</strong></span>
+            <span class="game-players">● 2 jugando</span>
+          </div>
+          <button class="btn-game">Jugar ahora</button>
+        </div>
+
+        <div class="game-card" onclick="abrirJuego('Craps - Dados')">
+          <div class="game-icon">🎲</div>
+          <div class="game-badge badge-hot">Caliente</div>
+          <h3 class="game-name">Craps — Dados</h3>
+          <p class="game-desc">Lanza los dados y apuesta a los resultados. Alto riesgo, alta recompensa.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 15</strong></span>
+            <span class="game-players">● 5 jugando</span>
+          </div>
+          <button class="btn-game">Jugar ahora</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-overlay" id="modalJuego">
+    <div class="modal" style="position:relative; max-width:1000px; width:95%; min-height:80vh; box-shadow: 0 0 30px rgba(0,0,0,0.7);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <button class="btn-primary" style="background:var(--dark); color:white;" onclick="anteriorJuego()">⬅</button>
+        <strong id="gameTitle" style="color:var(--gold); font-size:1.1rem;">Juego</strong>
+        <button class="btn-primary" style="background:var(--dark); color:white;" onclick="siguienteJuego()">➡</button>
+      </div>
+      <iframe id="gameFrame" src="" class="modal-content" style="height:calc(100vh - 220px); min-height:450px;"></iframe>
+      <div style="display:flex; gap:12px; align-items:center; justify-content:center; margin-top:10px;">
+        <button class="btn-primary" onclick="abrirJuegoEnVentana()" style="padding:0.5rem 1rem;">Abrir en pestaña</button>
+        <span style="color:#bbb; font-size:0.8rem;">Usa ⬅➡ para cambiar juego en el carrusel</span>
+      </div>
+      <button class="btn-primary" style="position: absolute; top: 10px; right: 10px; padding: 5px 10px;" onclick="cerrarModal('modalJuego')">✕</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalPromo">
+    <div class="modal" style="padding: 2rem; color: white; background: rgba(15,15,15,0.95);">
+      <h2 id="modalPromoNombre" style="color: var(--gold); margin-bottom: 1rem;"></h2>
+      <p id="modalPromoDescription" style="font-size: 1.1rem;"></p>
+      <button class="btn-primary" style="margin-top: 1rem;" onclick="cerrarModal('modalPromo')">Cerrar</button>
+    </div>
+  </div>
+
+  <section id="promociones" class="promo-section">
+    <div class="games-container">
+      <div class="section-header">
+        <h2 class="section-title">Promociones</h2>
+        <p class="section-sub">Atlantic premia tu preferencia</p>
+      </div>
+
+      <div class="games-grid">
+        <div class="game-card" onclick="abrirJuego('Descuento del 10%')">
+          <div class="game-icon">💸</div>
+          <div class="game-badge">En vivo</div>
+          <h3 class="game-name">Descuento del 10%</h3>
+          <p class="game-desc">Válido solo en los siguientes juegos.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 10</strong></span>
+            <span class="game-players" style="color: #e05555;">Expira en 24h</span>
+          </div>
+          <button class="btn-game">¡Obtenerlo ya!</button>
+        </div>
+
+        <div class="game-card" onclick="abrirJuego('Free Spins')">
+          <div class="game-icon">🎰</div>
+          <div class="game-badge">En vivo</div>
+          <h3 class="game-name">Free Spins</h3>
+          <p class="game-desc">Obtén 20 tiros gratis en los siguientes juegos.</p>
+          <div class="game-meta">
+            <span>Por recarga mín de: <strong>S/ 50</strong></span>
+          </div>
+          <button class="btn-game">¡Reclamar ahora!</button>
+        </div>
+
+        <div class="game-card" onclick="abrirJuego('Free ticket')">
+          <div class="game-icon">🎟️</div>
+          <div class="game-badge badge-new">Nuevo</div>
+          <h3 class="game-name">Free ticket</h3>
+          <p class="game-desc">Por una ganancia mayor a S/100 obtén un ticket gratis con 50% del monto ganado.</p>
+          <div class="game-meta">
+            <span>Apuesta mín: <strong>S/ 5</strong></span>
+          </div>
+          <button class="btn-game">Reclamar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Juega con responsabilidad. Solo mayores de 18 años.</p>
+    <p>© 2026 Atlantic City — Todos los derechos reservados</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

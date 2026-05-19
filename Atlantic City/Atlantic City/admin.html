@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elite Admin - Atlantic City</title>
+  <link rel="stylesheet" href="estilos.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <button class="logo-btn" onclick="window.location.reload()">
+      <h2>Atlantic City <span style="font-size: 12px; color: var(--gold);">EXECUTIVE</span></h2>
+    </button>
+  </div>
+  <div class="nav-btns">
+    <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+  </div>
+</nav>
+
+<main>
+  <div class="admin-header" style="margin-bottom: 25px;">
+    <h2>Panel de Control Estratégico</h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="card">
+      <h3 style="color: var(--gold); margin-bottom: 15px; font-size: 13px; text-transform: uppercase;">Incidencias por Tipo</h3>
+      <div style="height: 200px;"><canvas id="chartQuejas"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3 style="color: var(--gold); margin-bottom: 15px; font-size: 13px; text-transform: uppercase;">Rango Etario Clientes</h3>
+      <div style="height: 200px;"><canvas id="chartEdad"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3 style="color: var(--gold); margin-bottom: 15px; font-size: 13px; text-transform: uppercase;">Marketing Directo</h3>
+      <div id="contenedorPromociones">
+        <div class="promo-card">
+            <strong style="color: white; font-size: 12px;">💸 Bono 10%</strong>
+            <button class="btn-action" style="float:right; scale:0.8;" onclick="abrirModalMarketing('Bono del 10%')">Enviar</button>
+        </div>
+        <div class="promo-card">
+            <strong style="color: white; font-size: 12px;">🎰 Free Spins</strong>
+            <button class="btn-action" style="float:right; scale:0.8;" onclick="abrirModalMarketing('Free Spins')">Enviar</button>
+        </div>
+        <div class="promo-card">
+            <strong style="color: white; font-size: 12px;">🎟️ VIP Ticket</strong>
+            <button class="btn-action" style="float:right; scale:0.8;" onclick="abrirModalMarketing('VIP Ticket')">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 15px;">
+      <div class="card" style="text-align: center; border-left: 4px solid var(--gold); display: flex; flex-direction: column; justify-content: center;">
+        <p style="color: var(--text-muted); font-size: 10px; margin: 0;">CLIENTES TOTALES</p>
+        <h2 id="kpiClientes" style="font-size: 24px; color: white; margin: 5px 0;">0</h2>
+      </div>
+      <div class="card" style="text-align: center; border-left: 4px solid #2196f3; display: flex; flex-direction: column; justify-content: center;">
+        <p style="color: var(--text-muted); font-size: 10px; margin: 0;">SEGMENTO VIP</p>
+        <h2 id="kpiFrecuentes" style="font-size: 24px; color: #2196f3; margin: 5px 0;">0</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTONES EXPORTAR / IMPORTAR -->
+  <div style="display:flex; gap:10px; margin-bottom:20px;">
+    <button class="btn-action" onclick="exportarDatos()" style="display:flex;align-items:center;gap:6px;">📤 Exportar datos (JSON)</button>
+    <button class="btn-action" onclick="importarDatos()" style="display:flex;align-items:center;gap:6px;background:#333;color:white;">📥 Importar datos (JSON)</button>
+  </div>
+
+  <!-- TABLA DE CLIENTES -->
+  <div class="admin-wrap" style="margin-bottom: 40px;">
+    <div class="admin-header">
+      <h2>Base de Datos de Clientes</h2>
+      <span id="contador" style="color: var(--gold); font-size: 14px;">0 clientes registrados</span>
+    </div>
+    <div style="margin: 10px 0; display:flex; gap:8px; align-items:center;">
+      <input id="busquedaClientes" type="text" placeholder="Buscar por DNI, nombre o correo" style="flex:1;" onkeyup="aplicarFiltroClientes()" />
+      <button class="btn-nav-register" style="padding:0.6rem 1rem;" onclick="document.getElementById('busquedaClientes').value=''; aplicarFiltroClientes();">Limpiar</button>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Perfil</th><th>DNI</th><th>Nombre Completo</th><th>Edad</th><th>Email</th><th>Gestión</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TABLA DE QUEJAS -->
+  <div class="admin-wrap" style="margin-bottom: 40px;">
+    <div class="admin-header">
+      <h2>Buzón de Atención al Cliente</h2>
+      <span id="contadorQuejas" style="background:var(--gold); color:black; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">0 Incidencias</span>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Fecha</th><th>Remitente</th><th>Categoría</th><th>Detalle</th><th>Acción</th></tr>
+        </thead>
+        <tbody id="tablaQuejasBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TABLA DE RECARGAS -->
+  <div class="admin-wrap" style="margin-bottom: 60px;">
+    <div class="admin-header">
+      <h2>Solicitudes de Recarga</h2>
+      <span id="contadorRecargas" style="background:var(--gold); color:black; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">0 Solicitudes</span>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>DNI</th><th>Monto</th><th>Fecha</th><th>Descripción</th><th>Estado</th><th>Comprobante</th><th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tablaRecargasBody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL DE EDICIÓN -->
+<div id="modalEditar" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="color: var(--gold); margin-bottom: 20px;">Editar Perfil de Cliente</h3>
+        <label style="color:#888; font-size: 12px;">Nombre Completo</label>
+        <input type="text" id="editNombre">
+        <label style="color:#888; font-size: 12px;">Segmento</label>
+        <select id="editSegmento">
+            <option value="estandar">👤 ESTÁNDAR</option>
+            <option value="vip">👑 VIP</option>
+        </select>
+        <label style="color:#888; font-size: 12px;">Edad</label>
+        <input type="number" id="editEdad">
+        <label style="color:#888; font-size: 12px;">Email</label>
+        <input type="email" id="editEmail">
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-action" onclick="guardarCambios()" style="flex: 1;">Guardar</button>
+            <button onclick="cerrarModal()" style="flex: 1; background: #333; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- NUEVO MODAL: SELECCIÓN DE CLIENTES PARA MARKETING -->
+<div id="modalMarketing" class="modal-marketing-overlay">
+    <div class="modal-marketing-content">
+        <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 id="mktPromoTitulo" style="color: var(--gold); margin: 0;">Enviar Promoción</h3>
+            <button onclick="cerrarModal()" style="background:none; border:none; color:#888; font-size:28px; cursor:pointer;">&times;</button>
+        </div>
+        
+        <p style="color: #bbb; font-size: 13px; margin-top: 0;">Selecciona los destinatarios:</p>
+        
+        <input type="text" class="search-mkt" id="mktSearch" placeholder="Buscar por nombre o DNI..." onkeyup="filtrarMkt()">
+
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button class="btn-action" onclick="toggleTodosMkt(true)">Seleccionar Todos</button>
+            <button class="btn-action" style="background:#444; color:white" onclick="toggleTodosMkt(false)">Desmarcar</button>
+        </div>
+
+        <div class="client-selection-list" id="mktListaClientes">
+            <!-- Se llena dinámicamente -->
+        </div>
+
+        <button class="btn-action" style="width: 100%; padding: 15px; font-size: 14px;" onclick="confirmarEnvioMkt()">ENVIAR AHORA 🚀</button>
+    </div>
+</div>
+
+<script>
+    async function manejarImportacion(input) {
+        if (!input.files[0]) return;
+        if (confirm("¿Estás seguro? Esto reemplazará todos los datos actuales.")) {
+            try {
+                const msg = await DB.importar(input.files[0]);
+                alert(msg);
+                location.reload(); // Recargamos para ver los nuevos datos
+            } catch (err) {
+                alert("Error: " + err);
+            }
+        }
+    }
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

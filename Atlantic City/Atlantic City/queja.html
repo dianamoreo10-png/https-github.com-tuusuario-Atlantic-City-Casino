@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlantic City — Quejas</title>
+
+  <link rel="stylesheet" href="estilos.css">
+</head>
+
+<body>
+
+  <main class="main-container">
+    
+   <section class="form-container">
+  <h2>📩 Enviar Queja</h2>
+
+  <form id="formQueja">
+    <label for="nombre">Nombre del Cliente</label>
+    <input type="text" id="nombre" readonly>
+
+    <label for="tipo">Tipo de queja <span style="color:var(--gold)">*</span></label>
+    <select id="tipo" required>
+      <option value="">Selecciona...</option>
+      <option>Servicio</option>
+      <option>Atención</option>
+      <option>Problema técnico</option>
+      <option>Pagos</option>
+      <option>Promociones</option>
+      <option>Seguridad</option>
+      <option>Interfaz</option>
+      <option>Velocidad</option>
+      <option>Juego no reconocido</option>
+      <option>Otro</option>
+    </select>
+
+    <label for="descripcion">Descripción <span style="color:var(--gold)">*</span></label>
+    <textarea id="descripcion" required placeholder="Detalla tu inconveniente..."></textarea>
+
+    <label>Adjuntar evidencia (Opcional)</label>
+    <input type="file" style="border:none; background:transparent; padding:0;">
+
+    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+      <input type="checkbox" required style="width:auto; margin:0;"> 
+      <span style="font-size:12px;">Confirmo que la información es verídica</span>
+    </label>
+
+    <button class="btn btn-enviar" type="submit">Enviar Queja</button>
+    <button class="btn btn-volver" type="button" onclick="volver()">⬅ Volver al Inicio</button>
+  </form>
+
+  <div class="mensaje" id="mensajeExito">✅ Queja enviada correctamente</div>
+</section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">
+      Juega con responsabilidad. Solo mayores de 18 años.
+    </p>
+    <p>© 2026 Atlantic City — Todos los derechos reservados</p>
+  </footer>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
